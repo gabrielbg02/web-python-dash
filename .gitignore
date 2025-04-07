@@ -1,0 +1,7 @@
+3des/
+.venv/
+FastAPI/
+conexion_mongo.py
+*.pdf
+proyecto_cmch/
+proyecto_contraloria.tar/

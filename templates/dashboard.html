@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Intranet Contraloría de Chacao</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://kit.fontawesome.com/3906987ac6.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        .dataTables_filter {
+            display: none;
+        }
+        .dataTables_length {
+            display: none;
+        }
+        .btn-danger {
+            margin-left: 3px;
+            color: white;
+        }
+        .fa-trash {
+            margin-right: 3px;
+        }
+        /* Fuerza la eliminación de cualquier elemento flotante */
+        #tablaFormularios thead th:after,
+        #tablaFormularios thead th:before {
+            content: "" !important;
+            display: none !important;
+        }
+        .btn-success {
+    margin-left: 3px;
+    color: white;
+        }
+        .fa-file-pdf {
+            margin-right: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <nav class="navbar">
+            <div class="container">
+                <span class="navbar-brand">Hola, {{ user }}</span>
+                <a href="/logout" class="btn btn-danger">Cerrar Sesión</a>
+            </div>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <img src="/static/images/logo_contraloria.png" alt="Logo" width="150" class="me-3">
+            <h2 class="text-center mb-0 mx-auto">Registro de Reportes OAC</h2>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card text-white bg-info">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Registrados Hoy</h5>
+                        <p class="card-text display-4">{{ registros_hoy }}</p> <!-- Primer contador -->
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-white bg-info">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Registrados Semana</h5>
+                        <p class="card-text display-4">{{ registros_semana }}</p> <!-- Segundo contador -->
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-white bg-info">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Total registros</h5>
+                        <p class="card-text display-4">{{ total_registros }}</p> <!-- Tercer contador -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <table id="tablaFormularios" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Organismo</th>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Fecha</th>
+                    <th>Reporte</th>
+                    <th>Acciones</th>  
+                </tr>
+            </thead>
+            <tbody>
+                {% for dato in datos %}
+                <tr id="row-{{ dato.id }}">
+                    <td>{{ dato.nombre_organismo }}</td>
+                    <td>{{ dato.nombre_llenado }}</td>
+                    <td>{{ dato.correo_llenado }}</td>
+                    <td>{{ dato.id.generation_time.strftime('%d-%m-%Y') if dato.id.generation_time else '' }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" onclick="mostrarDetalles('{{ dato.id }}')">
+                            <i class="fa-regular fa-folder-open"></i>
+                        </button>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-success" onclick="generarPDF('{{ dato.id }}')">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </button>
+                        <!--<button class="btn btn-sm btn-danger" onclick="eliminarReporte('{{ dato.id }}')">
+                            <i class="fa-solid fa-trash"></i> Eliminar
+                        </button> -->
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal fade" id="detalleModal" tabindex="-1" aria-labelledby="detalleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detalleModalLabel">Detalle del Reporte</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>Datos Personales</h4>
+                            <h7>Jefe o Jefa de la Oficina de Atención al Ciudadano</h7>
+                            <p><strong>Nombre y Apellido:</strong> <span id="modalNombre"></span></p>
+                            <p><strong>Número de Cédula:</strong> <span id="modalCedula"></span></p>
+                            <p><strong>Cargo:</strong> <span id="modalCargo"></span></p>
+                            <p><strong>Correo Electrónico:</strong> <span id="modalCorreo"></span></p>
+                            <p><strong>Número de Teléfono:</strong> <span id="modalTelefono"></span></p>
+
+                            <h4>Información del Organismo u Ente</h4>
+                            <p><strong>Nombre del Organismo:</strong> <span id="modalOrganismo"></span></p>
+                            <p><strong>Instancia:</strong> <span id="modalInstancia"></span></p>
+                            <p><strong>Mes Reportado:</strong> <span id="modalMes"></span></p>
+                            <p><strong>Estado:</strong> <span id="modalEstado"></span></p>
+                            <p><strong>Municipio:</strong> <span id="modalMunicipio"></span></p>
+                            
+                            <h4 class="mt-4">Información Personal de quien llena el Formulario</h4>
+                            <p><strong>Nombre:</strong> <span id="modalNombreLlenado"></span></p>
+                            <p><strong>Cargo:</strong> <span id="modalCargoLlenado"></span></p>
+                            <p><strong>Cédula:</strong> <span id="modalNumeroCedulaLlenado"></span></p>
+                            <p><strong>Teléfono:</strong> <span id="modalNumeroTelefonoLlenado"></span></p>
+                            <p><strong>Correo:</strong> <span id="modalCorreoLlenado"></span></p>
+
+                            <h4>Actividades para la Administración Pública</h4>
+
+                            <p><strong>Nombre del Ministerio/Institución:</strong> <span id="modalNombreMinisterioAp"></span></p>
+                            <p><strong>Cantidad y Descripción de Actividades:</strong> <span id="modalCantidadActividadesAp"></span></p>
+                            <p><strong>Talleres Realizadas:</strong> <span id="modalCantidadTalleresAp"></span></p>
+                            <p><strong>Charlas Realizadas:</strong> <span id="modalCantidadCharlasAp"></span></p>
+                            <p><strong>Jornadas Realizadas:</strong> <span id="modalCantidadJornadasAp"></span></p>
+                            <p><strong>Forochats Realizados:</strong> <span id="modalCantidadForochatsAp"></span></p>
+                            <p><strong>Funcionarios Masculinos Atendidos:</strong> <span id="modalCantidadFuncionariosMasculinoAp"></span></p>
+                            <p><strong>Funcionarias Femeninas Atendidas:</strong> <span id="modalCantidadFuncionariosFemeninoAp"></span></p>
+
+
+
+
+                        </div>
+                        <div class="col-md-6">
+                            <h4>Actividades de la Oficina</h4>
+                            <h7>Mecanismos de Participación Ciudadana<h7>
+                            <p><strong>Núm. de Denuncias:</strong> <span id="modalDenuncias"></span></p>
+                            <p><strong>Núm. de Reclamos:</strong> <span id="modalReclamos"></span></p>
+                            <p><strong>Núm. de Quejas:</strong> <span id="modalQuejas"></span></p>
+                            <p><strong>Núm. de Peticiones:</strong> <span id="modalPeticiones"></span></p>
+                            <p><strong>Núm. de Sugerencias:</strong> <span id="modalSugerencias"></span></p>
+                            <p><strong>Núm. de Asesorías:</strong> <span id="modalAsesorias"></span></p>
+                            <p><strong>Población Masculino Atendida:</strong> <span id="modalPobMasc"></span></p>
+                            <p><strong>Población Femenina Atendida:</strong> <span id="modalPobFem"></span></p>
+                        
+                            <h4>Actividades para la OIPP</h4>
+
+                            <p><strong>Talleres Realizadas:</strong> <span id="modalCantidadTalleresOipp"></span></p>
+                            <p><strong>Charlas Realizadas:</strong> <span id="modalCantidadCharlasOipp"></span></p>
+                            <p><strong>Conversatorios Recibidos:</strong> <span id="modalCantidadConversatoriosOipp"></span></p>
+                            <p><strong>Jornadas Realizadas:</strong> <span id="modalCantidadJornadasOipp"></span></p>
+                            <p><strong>Forochats Realizados:</strong> <span id="modalCantidadForochatsOipp"></span></p>
+                            <p><strong>Población Masculina Atendida:</strong> <span id="modalCantidadAdulmascAtendOipp"></span></p>
+                            <p><strong>Población Femenina Atendida:</strong> <span id="modalCantidadAdulfemAtendOipp"></span></p>
+
+
+                            <h4>Actividades Sistema Educativo</h4>
+
+                            <p><strong>Nombre de la Escuela:</strong> <span id="modalNombreEscuelaSe"></span></p>
+                            <p><strong>Cantidad y Descripción de Actividades:</strong> <span id="modalCantidadActividadesSe"></span></p>
+                            <p><strong>Talleres Realizadas:</strong> <span id="modalCantidadTalleresSe"></span></p>
+                            <p><strong>Charlas Realizadas:</strong> <span id="modalCantidadCharlasSe"></span></p>
+                            <p><strong>Conversatorios Recibidos:</strong> <span id="modalCantidadConversatoriosSe"></span></p>
+                            <p><strong>Jornadas Realizadas:</strong> <span id="modalCantidadJornadasSe"></span></p>
+                            <p><strong>Forochats Realizados:</strong> <span id="modalCantidadForochatsSe"></span></p>
+                            <p><strong>Niños/Adolescentes Masculinos Atendidos:</strong> <span id="modalCantidadNinosMascSe"></span></p>
+                            <p><strong>Niñas/Adolescentes Femeninas Atendidas:</strong> <span id="modalCantidadNinosFemeninoSe"></span></p>
+                            <p><strong>Adultos Masculinos Atendidos:</strong> <span id="modalCantidadAdulmascAtendSe"></span></p>
+                            <p><strong>Adultos Femeninos Atendidos:</strong> <span id="modalCantidadAdulfemAtendSe"></span></p>
+
+                        
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h4>Observaciones</h4>
+                            <p id="modalObservaciones"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function eliminarReporte(id) {
+            const { value: confirmacion } = await Swal.fire({
+                title: '¿Eliminar reporte?',
+                text: "¡Esta acción no se puede deshacer!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                reverseButtons: true
+            });
+
+            if (!confirmacion) return;
+
+            try {
+                console.log("Intentando eliminar ID:", id);
+                const response = await fetch(`/api/datos/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                 });
+                 if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Error al eliminar');
+                }
+
+                const result = await response.json();
+                const rowToRemove = document.getElementById(`row-${id}`);
+                if (rowToRemove) {
+                    rowToRemove.remove();
+                } else {
+                    console.warn(`No se encontró la fila con ID row-${id}`);
+                }
+
+                // Actualizar contadores de manera más robusta
+                const counters = document.querySelectorAll('.card-body .display-4');
+                if (counters.length >= 3) {
+                    counters[0].textContent = result.counters.hoy;
+                    counters[1].textContent = result.counters.semana;
+                    counters[2].textContent = result.counters.total;
+                } else {
+                    console.error('No se encontraron los 3 contadores esperados');
+                }
+                    // Mostrar confirmación con SweetAlert
+                await Swal.fire({
+                    title: '¡Eliminado!',
+                    text: 'El reporte ha sido eliminado correctamente',
+                    icon: 'success',
+                    confirmButtonColor: '#3085d6',
+                    timer: 2000,
+                    timerProgressBar: true
+                });
+            } catch (error) {
+                console.error("Error:", error);
+                await Swal.fire({
+                    title: 'Error',
+                    text: error.message || 'No se pudo eliminar el reporte',
+                    icon: 'error',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        }
+
+        $(document).ready(function () {
+            $('#tablaFormularios').DataTable({
+                "order": [[3, "desc"]],
+                "columnDefs": [
+                    { 
+                        "orderable": false,
+                        "targets": [0,1,2,3,4,5]
+                    },
+                    { 
+                        "targets": [3],
+                        "orderable": true,
+                        "className": "no-sort-icon"
+                    }
+                ],
+                "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
+                }
+            });
+        });
+
+        async function mostrarDetalles(id) {
+            try {
+                const response = await fetch(`/api/datos/${id}`);
+                if (response.status !== 200) throw new Error("Error al obtener los datos");
+
+                const registro = await response.json();
+                
+                // Llenar el contenido del modal con los datos obtenidos
+                document.getElementById("modalNombre").textContent = registro.nombre || 'N/A';
+                document.getElementById("modalCargo").textContent = registro.cargo || 'N/A';
+                document.getElementById("modalCedula").textContent = registro.cedula || 'N/A';
+                document.getElementById("modalTelefono").textContent = registro.telefono || 'N/A';
+                document.getElementById("modalCorreo").textContent = registro.correo || 'N/A';
+
+                document.getElementById("modalOrganismo").textContent = registro.organismo || 'N/A';
+                document.getElementById("modalInstancia").textContent = registro.instancia || 'N/A';
+                document.getElementById("modalMes").textContent = registro.mes || 'N/A';
+                document.getElementById("modalEstado").textContent = registro.estado || 'N/A';
+                document.getElementById("modalMunicipio").textContent = registro.municipio || 'N/A';
+                
+                document.getElementById("modalNombreLlenado").textContent = registro.nombre_llenado || 'N/A';
+                document.getElementById("modalCorreoLlenado").textContent = registro.correo_llenado || 'N/A';
+                document.getElementById("modalCargoLlenado").textContent = registro.cargo_llenado || 'N/A';
+                document.getElementById("modalNumeroCedulaLlenado").textContent = registro.numero_cedula_llenado || 'N/A';
+                document.getElementById("modalNumeroTelefonoLlenado").textContent = registro.numero_telefono_llenado || 'N/A';
+                
+                document.getElementById("modalDenuncias").textContent = registro.denuncias || '0';
+                document.getElementById("modalReclamos").textContent = registro.reclamos || '0';
+                document.getElementById("modalQuejas").textContent = registro.quejas || '0';
+                document.getElementById("modalPeticiones").textContent = registro.peticiones || '0';
+                document.getElementById("modalSugerencias").textContent = registro.sugerencias || '0';
+                document.getElementById("modalAsesorias").textContent = registro.asesorias || '0';
+                document.getElementById("modalPobMasc").textContent = registro.pob_masc || '0';
+                document.getElementById("modalPobFem").textContent = registro.pob_fem || '0';
+                
+                document.getElementById("modalCantidadTalleresOipp").textContent = registro.cantidad_talleres_oipp || '0';
+                document.getElementById("modalCantidadCharlasOipp").textContent = registro.cantidad_charlas_oipp || '0';
+                // Corregir el error del doble 's'
+                document.getElementById("modalCantidadForochatsOipp").textContent = registro.cantidad_forochats_oipp || '0';
+                document.getElementById("modalCantidadConversatoriosOipp").textContent = registro.cantidad_conversatorios_oipp || '0';
+                document.getElementById("modalCantidadJornadasOipp").textContent = registro.cantidad_jornadas_oipp || '0';
+                document.getElementById("modalCantidadAdulmascAtendOipp").textContent = registro.cantidad_adulmasc_atend_oipp || '0';
+                document.getElementById("modalCantidadAdulfemAtendOipp").textContent = registro.cantidad_adulfem_atend_oipp || '0';
+            
+                // Corregir estos IDs para que coincidan con el HTML:
+                document.getElementById("modalNombreEscuelaSe").textContent = registro.nombre_escuela_se || 'N/A';
+                document.getElementById("modalCantidadActividadesSe").textContent = registro.cantidad_actividades_se || 'N/A';
+                document.getElementById("modalCantidadTalleresSe").textContent = registro.cantidad_talleres_se || '0';
+                document.getElementById("modalCantidadCharlasSe").textContent = registro.cantidad_charlas_se || '0';
+                document.getElementById("modalCantidadConversatoriosSe").textContent = registro.cantidad_conversatorios_se || '0';
+                document.getElementById("modalCantidadJornadasSe").textContent = registro.cantidad_jornadas_se || '0';
+                document.getElementById("modalCantidadForochatsSe").textContent = registro.cantidad_forochats_se || '0';
+                document.getElementById("modalCantidadNinosMascSe").textContent = registro.cantidad_ninos_masc_se || '0';
+                // Corregir el error tipográfico aquí (Se -> se):
+                document.getElementById("modalCantidadNinosFemeninoSe").textContent = registro.cantidad_ninos_femenino_se || '0';
+                document.getElementById("modalCantidadAdulmascAtendSe").textContent = registro.cantidad_adulmasc_atend_se || '0';
+                document.getElementById("modalCantidadAdulfemAtendSe").textContent = registro.cantidad_adulfem_atend_se || '0';
+            
+                document.getElementById("modalNombreMinisterioAp").textContent = registro.nombre_ministerio_ap || 'N/A';
+                document.getElementById("modalCantidadActividadesAp").textContent = registro.cantidad_actividades_ap || 'N/A';
+                document.getElementById("modalCantidadTalleresAp").textContent = registro.cantidad_talleres_ap || '0';
+                document.getElementById("modalCantidadCharlasAp").textContent = registro.cantidad_charlas_ap || '0';
+                document.getElementById("modalCantidadJornadasAp").textContent = registro.cantidad_jornadas_ap || '0';
+                document.getElementById("modalCantidadForochatsAp").textContent = registro.cantidad_forochats_ap || '0';
+                document.getElementById("modalCantidadFuncionariosMasculinoAp").textContent = registro.cantidad_funcionarios_masculino_ap || '0';
+                document.getElementById("modalCantidadFuncionariosFemeninoAp").textContent = registro.cantidad_funcionarios_femenino_ap || '0';
+
+                document.getElementById("modalObservaciones").textContent = registro.observaciones || 'Sin observaciones';
+
+
+                // Mostrar el modal
+                const modal = new bootstrap.Modal(document.getElementById("detalleModal"));
+                modal.show();
+            } catch (error) {
+                console.error("Error:", error);
+                alert("No se pudo cargar la información.");
+            }
+        }
+        async function generarPDF(id) {
+            try {
+                // Mostrar carga
+                Swal.fire({
+                    title: 'Generando PDF',
+                    html: 'Por favor espere...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Obtener los datos
+                const response = await fetch(`/api/datos/${id}`);
+                if (!response.ok) throw new Error("Error al obtener datos");
+                const registro = await response.json();
+
+                // Verificar que tenemos los datos
+                if (!registro) throw new Error("No se recibieron datos del servidor");
+
+                // Crear PDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Agregar márgenes
+                const margin = 15;
+                let y = margin;
+                
+                // Logo - verifica que la ruta sea correcta
+                try {
+                    const logoUrl = '/static/images/logo_contraloria.png';
+                    const img = new Image();
+                    img.src = logoUrl;
+                    
+                    doc.addImage(img, 'PNG', margin, y, 40, 20);
+                } catch (e) {
+                    console.warn("No se pudo cargar el logo:", e);
+                }
+                
+                y += 25; // Espacio después del logo
+                
+                // Título
+                doc.setFontSize(16);
+                doc.setFont("helvetica", "bold");
+                doc.text('Reporte OAC - Detalles', 105, y, { align: 'center' });
+                y += 10;
+                
+                // Línea divisoria
+                doc.setDrawColor(200, 200, 200);
+                doc.line(margin, y, 200 - margin, y);
+                y += 10;
+                
+                // Datos básicos
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "normal");
+                
+                // Función para agregar texto con manejo de valores nulos
+                const addText = (label, value) => {
+                    doc.text(`${label}: ${value || 'N/A'}`, margin, y);
+                    y += 7;
+                };
+                
+                addText('Organismo', registro.nombre_organismo || registro.organismo);
+                addText('Fecha', registro.fecha || (registro.id && registro.id.generation_time ? 
+                    new Date(registro.id.generation_time).toLocaleDateString() : 'N/A'));
+                
+                y += 5; // Espacio adicional
+                
+                // Datos personales
+                doc.setFont("helvetica", "bold");
+                doc.text('Datos Personales:', margin, y);
+                y += 7;
+                doc.setFont("helvetica", "normal");
+                
+                addText('Nombre', registro.nombre);
+                addText('Cédula', registro.cedula);
+                addText('Correo', registro.correo);
+                addText('Teléfono', registro.telefono);
+                
+                // Guardar PDF
+                doc.save(`reporte_oac_${id}.pdf`);
+                
+                // Cerrar alerta
+                Swal.close();
+                
+            } catch (error) {
+                console.error("Error generando PDF:", error);
+                Swal.fire('Error', 'No se pudo generar el PDF: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
