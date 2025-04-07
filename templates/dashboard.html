@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Intranettt Contraloría de Chacao</title>
+    <title>Intranet Contraloría de Chacao</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -411,11 +411,13 @@
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 
-                // Agregar márgenes
+                // Configuración general
                 const margin = 15;
                 let y = margin;
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const maxWidth = pageWidth - 2 * margin;
                 
-                // Logo - verifica que la ruta sea correcta
+                // Logo
                 try {
                     const logoUrl = '/static/images/logo_contraloria.png';
                     const img = new Image();
@@ -426,45 +428,196 @@
                     console.warn("No se pudo cargar el logo:", e);
                 }
                 
-                y += 25; // Espacio después del logo
-                
                 // Título
                 doc.setFontSize(16);
                 doc.setFont("helvetica", "bold");
-                doc.text('Reporte OAC - Detalles', 105, y, { align: 'center' });
-                y += 10;
+                doc.text('Reporte OAC - Detalles', pageWidth / 2, y + 10, { align: 'center' });
+                y += 25;
                 
-                // Línea divisoria
-                doc.setDrawColor(200, 200, 200);
-                doc.line(margin, y, 200 - margin, y);
-                y += 10;
-                
-                // Datos básicos
-                doc.setFontSize(12);
-                doc.setFont("helvetica", "normal");
-                
-                // Función para agregar texto con manejo de valores nulos
-                const addText = (label, value) => {
-                    doc.text(`${label}: ${value || 'N/A'}`, margin, y);
-                    y += 7;
-                };
-                
-                addText('Organismo', registro.nombre_organismo || registro.organismo);
-                addText('Fecha', registro.fecha || (registro.id && registro.id.generation_time ? 
-                    new Date(registro.id.generation_time).toLocaleDateString() : 'N/A'));
-                
-                y += 5; // Espacio adicional
-                
+
                 // Datos personales
                 doc.setFont("helvetica", "bold");
-                doc.text('Datos Personales:', margin, y);
+                doc.text('Datos Personales', margin, y);
+                doc.text('Jefe o Jefa de la Oficina de Atención al Ciudadano', margin, y);
                 y += 7;
-                doc.setFont("helvetica", "normal");
                 
-                addText('Nombre', registro.nombre);
-                addText('Cédula', registro.cedula);
-                addText('Correo', registro.correo);
-                addText('Teléfono', registro.telefono);
+                doc.autoTable({
+                    startY: y,
+                    head: [['Campo', 'Valor']],
+                    body: [
+                        ['Nombre y Apellido', registro.nombre || 'N/A'],
+                        ['Cédula', registro.cedula || 'N/A'],
+                        ['Cargo', registro.cargo || 'N/A'],
+                        ['Correo Electrúnico', registro.correo || 'N/A'],
+                        ['Número de Teléfono', registro.telefono || 'N/A']
+                    ],
+                    margin: { left: margin, right: margin },
+                    styles: { fontSize: 10 },
+                    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' }
+                });
+                
+                y = doc.lastAutoTable.finalY + 10;
+
+
+
+                // Información básica
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "bold");
+                doc.text('Información Organismo u Ente', margin, y);
+                y += 7;
+                
+                doc.setFont("helvetica", "normal");
+                doc.autoTable({
+                    startY: y,
+                    head: [['Campo', 'Valor']],
+                    body: [
+                        ['Organismo', registro.nombre_organismo || registro.organismo || 'N/A'],
+                        ['Estado', registro.estado || 'N/A'],
+                        ['Municipio', registro.municipio || 'N/A'],
+                        ['Instancia', registro.instancia || 'N/A'],
+                        ['Mes Reportado', registro.mes || 'N/A']
+                    ],
+                    margin: { left: margin, right: margin },
+                    styles: { fontSize: 10 },
+                    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' }
+                });
+                
+                y = doc.lastAutoTable.finalY + 10;
+                
+                
+                // Datos de quien llena el formulario
+                doc.setFont("helvetica", "bold");
+                doc.text('Información de quien llena el formulario', margin, y);
+                y += 7;
+                
+                doc.autoTable({
+                    startY: y,
+                    head: [['Campo', 'Valor']],
+                    body: [
+                        ['Nombre', registro.nombre_llenado || 'N/A'],
+                        ['Cédula', registro.numero_cedula_llenado || 'N/A'],
+                        ['Cargo', registro.cargo_llenado || 'N/A'],
+                        ['Correo Electrónico', registro.correo_llenado || 'N/A'],
+                        ['Número de Teléfono', registro.numero_telefono_llenado || 'N/A']
+                    ],
+                    margin: { left: margin, right: margin },
+                    styles: { fontSize: 10 },
+                    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' }
+                });
+                
+                y = doc.lastAutoTable.finalY + 10;
+                
+                // Mecanismos de Participación Ciudadana
+                doc.setFont("helvetica", "bold");
+                doc.text('Actividades de la Oficina', margin, y);
+                doc.text('Mecanismos de Participación Ciudadana', margin, y);
+                y += 7;
+                
+                doc.autoTable({
+                    startY: y,
+                    head: [['Tipo', 'Cantidad']],
+                    body: [
+                        ['Denuncias', registro.denuncias || '0'],
+                        ['Reclamos', registro.reclamos || '0'],
+                        ['Quejas', registro.quejas || '0'],
+                        ['Peticiones', registro.peticiones || '0'],
+                        ['Sugerencias', registro.sugerencias || '0'],
+                        ['Asesorías', registro.asesorias || '0'],
+                        ['Población Masculina Atendida', registro.pob_masc || '0'],
+                        ['Población Femenina Atendida', registro.pob_fem || '0']
+                    ],
+                    margin: { left: margin, right: margin },
+                    styles: { fontSize: 10 },
+                    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' }
+                });
+                
+                y = doc.lastAutoTable.finalY + 10;
+                
+                // Actividades para la OIPP
+                doc.setFont("helvetica", "bold");
+                doc.text('Actividades para la OIPP', margin, y);
+                y += 7;
+                
+                doc.autoTable({
+                    startY: y,
+                    head: [['Actividad', 'Cantidad']],
+                    body: [
+                        ['Talleres Realizados', registro.cantidad_talleres_oipp || '0'],
+                        ['Charlas Realizadas', registro.cantidad_charlas_oipp || '0'],
+                        ['Conversatorios Recibidos', registro.cantidad_conversatorios_oipp || '0'],
+                        ['Jornadas Realizadas', registro.cantidad_jornadas_oipp || '0'],
+                        ['Forochats Realizados', registro.cantidad_forochats_oipp || '0'],
+                        ['Población Masculina Atendida', registro.cantidad_adulmasc_atend_oipp || '0'],
+                        ['Población Femenina Atendida', registro.cantidad_adulfem_atend_oipp || '0']
+                    ],
+                    margin: { left: margin, right: margin },
+                    styles: { fontSize: 10 },
+                    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' }
+                });
+                
+                y = doc.lastAutoTable.finalY + 10;
+                
+                // Actividades Sistema Educativo
+                doc.setFont("helvetica", "bold");
+                doc.text('Actividades Sistema Educativo', margin, y);
+                y += 7;
+                
+                doc.autoTable({
+                    startY: y,
+                    head: [['Campo', 'Valor']],
+                    body: [
+                        ['Nombre de la Escuela', registro.nombre_escuela_se || 'N/A'],
+                        ['Descripción de Actividades', registro.cantidad_actividades_se || 'N/A'],
+                        ['Talleres Realizados', registro.cantidad_talleres_se || '0'],
+                        ['Charlas Realizadas', registro.cantidad_charlas_se || '0'],
+                        ['Conversatorios Recibidos', registro.cantidad_conversatorios_se || '0'],
+                        ['Jornadas Realizadas', registro.cantidad_jornadas_se || '0'],
+                        ['Forochats Realizados', registro.cantidad_forochats_se || '0'],
+                        ['Niños/Adolescentes Masculinos Atendidos', registro.cantidad_ninos_masc_se || '0'],
+                        ['Niñas/Adolescentes Femeninas Atendidas', registro.cantidad_ninos_femenino_se || '0'],
+                        ['Adultos Masculinos Atendidos', registro.cantidad_adulmasc_atend_se || '0'],
+                        ['Adultos Femeninos Atendidos', registro.cantidad_adulfem_atend_se || '0']
+                    ],
+                    margin: { left: margin, right: margin },
+                    styles: { fontSize: 10 },
+                    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' }
+                });
+                
+                y = doc.lastAutoTable.finalY + 10;
+                
+                // Actividades para la Administración Pública
+                doc.setFont("helvetica", "bold");
+                doc.text('Actividades para la Administración Pública', margin, y);
+                y += 7;
+                
+                doc.autoTable({
+                    startY: y,
+                    head: [['Campo', 'Valor']],
+                    body: [
+                        ['Nombre del Ministerio/Institución', registro.nombre_ministerio_ap || 'N/A'],
+                        ['Descripción de Actividades', registro.cantidad_actividades_ap || 'N/A'],
+                        ['Talleres Realizados', registro.cantidad_talleres_ap || '0'],
+                        ['Charlas Realizadas', registro.cantidad_charlas_ap || '0'],
+                        ['Jornadas Realizadas', registro.cantidad_jornadas_ap || '0'],
+                        ['Forochats Realizados', registro.cantidad_forochats_ap || '0'],
+                        ['Funcionarios Masculinos Atendidos', registro.cantidad_funcionarios_masculino_ap || '0'],
+                        ['Funcionarias Femeninas Atendidas', registro.cantidad_funcionarios_femenino_ap || '0']
+                    ],
+                    margin: { left: margin, right: margin },
+                    styles: { fontSize: 10 },
+                    headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' }
+                });
+                
+                y = doc.lastAutoTable.finalY + 10;
+                
+                // Observaciones
+                doc.setFont("helvetica", "bold");
+                doc.text('Observaciones', margin, y);
+                y += 7;
+                
+                doc.setFont("helvetica", "normal");
+                const observaciones = registro.observaciones || 'Sin observaciones';
+                doc.text(observaciones, margin, y);
                 
                 // Guardar PDF
                 doc.save(`reporte_oac_${id}.pdf`);
