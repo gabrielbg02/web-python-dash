@@ -37,8 +37,8 @@
             display: none !important;
         }
         .btn-success {
-    margin-left: 3px;
-    color: white;
+            margin-left: 3px;
+            color: white;
         }
         .fa-file-pdf {
             margin-right: 3px;
@@ -62,7 +62,7 @@
             <div class="col-md-4">
                 <div class="card text-white bg-info">
                     <div class="card-body text-center">
-                        <h5 class="card-title">Registrados Hoy</h5>
+                        <h5 class="card-title">Registros Hoy</h5>
                         <p class="card-text display-4">{{ registros_hoy }}</p> <!-- Primer contador -->
                     </div>
                 </div>
@@ -70,7 +70,7 @@
             <div class="col-md-4">
                 <div class="card text-white bg-info">
                     <div class="card-body text-center">
-                        <h5 class="card-title">Registrados Semana</h5>
+                        <h5 class="card-title">Registros Semana</h5>
                         <p class="card-text display-4">{{ registros_semana }}</p> <!-- Segundo contador -->
                     </div>
                 </div>
@@ -93,7 +93,7 @@
                     <th>Correo</th>
                     <th>Fecha</th>
                     <th>Reporte</th>
-                    <th>Acciones</th>  
+                    <th>PDF</th>  
                 </tr>
             </thead>
             <tbody>
@@ -260,7 +260,7 @@
                     console.warn(`No se encontró la fila con ID row-${id}`);
                 }
 
-                // Actualizar contadores de manera más robusta
+                // Actualizar contadores 
                 const counters = document.querySelectorAll('.card-body .display-4');
                 if (counters.length >= 3) {
                     counters[0].textContent = result.counters.hoy;
@@ -346,14 +346,14 @@
                 
                 document.getElementById("modalCantidadTalleresOipp").textContent = registro.cantidad_talleres_oipp || '0';
                 document.getElementById("modalCantidadCharlasOipp").textContent = registro.cantidad_charlas_oipp || '0';
-                // Corregir el error del doble 's'
+                
                 document.getElementById("modalCantidadForochatsOipp").textContent = registro.cantidad_forochats_oipp || '0';
                 document.getElementById("modalCantidadConversatoriosOipp").textContent = registro.cantidad_conversatorios_oipp || '0';
                 document.getElementById("modalCantidadJornadasOipp").textContent = registro.cantidad_jornadas_oipp || '0';
                 document.getElementById("modalCantidadAdulmascAtendOipp").textContent = registro.cantidad_adulmasc_atend_oipp || '0';
                 document.getElementById("modalCantidadAdulfemAtendOipp").textContent = registro.cantidad_adulfem_atend_oipp || '0';
             
-                // Corregir estos IDs para que coincidan con el HTML:
+                
                 document.getElementById("modalNombreEscuelaSe").textContent = registro.nombre_escuela_se || 'N/A';
                 document.getElementById("modalCantidadActividadesSe").textContent = registro.cantidad_actividades_se || 'N/A';
                 document.getElementById("modalCantidadTalleresSe").textContent = registro.cantidad_talleres_se || '0';
@@ -362,7 +362,7 @@
                 document.getElementById("modalCantidadJornadasSe").textContent = registro.cantidad_jornadas_se || '0';
                 document.getElementById("modalCantidadForochatsSe").textContent = registro.cantidad_forochats_se || '0';
                 document.getElementById("modalCantidadNinosMascSe").textContent = registro.cantidad_ninos_masc_se || '0';
-                // Corregir el error tipográfico aquí (Se -> se):
+                
                 document.getElementById("modalCantidadNinosFemeninoSe").textContent = registro.cantidad_ninos_femenino_se || '0';
                 document.getElementById("modalCantidadAdulmascAtendSe").textContent = registro.cantidad_adulmasc_atend_se || '0';
                 document.getElementById("modalCantidadAdulfemAtendSe").textContent = registro.cantidad_adulfem_atend_se || '0';

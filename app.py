@@ -185,7 +185,7 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
 
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/pp", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
@@ -196,23 +196,21 @@ async def logout():
     response.delete_cookie("sessionid")
     return response
 
-@app.get("/dashboard", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
 def read_root(request: Request):
     datos = datos_formulario.objects().order_by('-id').limit(100)
     
-    token = request.cookies.get("sessionid")
-    if not token:
-        return RedirectResponse(url="/", status_code=303)
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-    except JWTError:
-        return RedirectResponse(url="/", status_code=303)
-    username = 'Jeremi J Alcala M'
-    
-    
+    #token = request.cookies.get("sessionid")
+    #if not token:
+    #    return RedirectResponse(url="/", status_code=303)
+    #try:
+    #    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    #    username: str = payload.get("sub")
+    #    if username is None:
+    #        raise HTTPException(status_code=401, detail="Invalid token")
+    #except JWTError:
+    #    return RedirectResponse(url="/", status_code=303)
+    #username = 'Jeremi J Alcala M'
     
     print(f"Cantidad de datos recuperados: {len(datos)}") # Agrega esta línea
     hoy = datetime.now()
@@ -233,7 +231,7 @@ def read_root(request: Request):
         "registros_hoy": registros_hoy,
         "registros_semana": registros_semana,
         "total_registros": total_registros,
-        "user": username
+        #"user": username
     })
 
 
