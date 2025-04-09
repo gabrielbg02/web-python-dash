@@ -1,5 +1,5 @@
 #Usar una imagen base de Python
-FROM python:3.9-slim
+FROM python:3.13.3-alpine
 
 # Establecer el directorio de trabajo dentro del contenedor
 WORKDIR /proyecto_dashboard
