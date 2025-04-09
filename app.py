@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, staticfiles, Depends, status, Response
+from fastapi import FastAPI, Request, staticfiles, Depends, status, Response, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from mongoengine import *
@@ -33,7 +33,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def create_access_token(data: dict, expires_delta: timedelta):
     to_encode = data.copy()
-    expire = datetime.utcnow() + expires_delta
+    expire = datetime.now(timezone.utc) + expires_delta
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -185,7 +185,7 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
 
 
 
-@app.get("/pp", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
@@ -194,22 +194,26 @@ async def login_page(request: Request):
 async def logout():
     response = RedirectResponse(url="/", status_code=303)
     response.delete_cookie("sessionid")
+    # Cabeceras clave:
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
     return response
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/dashboard", response_class=HTMLResponse)
 def read_root(request: Request):
     datos = datos_formulario.objects().order_by('-id').limit(100)
     
-    #token = request.cookies.get("sessionid")
-    #if not token:
-    #    return RedirectResponse(url="/", status_code=303)
-    #try:
-    #    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    #    username: str = payload.get("sub")
-    #    if username is None:
-    #        raise HTTPException(status_code=401, detail="Invalid token")
-    #except JWTError:
-    #    return RedirectResponse(url="/", status_code=303)
+    token = request.cookies.get("sessionid")
+    if not token:
+        return RedirectResponse(url="/", status_code=303)
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+    except JWTError:
+        return RedirectResponse(url="/", status_code=303)
     #username = 'Jeremi J Alcala M'
     
     print(f"Cantidad de datos recuperados: {len(datos)}") # Agrega esta línea
@@ -225,14 +229,17 @@ def read_root(request: Request):
     registros_semana = datos_formulario.objects(id__gte=object_id_semana).count()
     total_registros = datos_formulario.objects.count()
     
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request,
-        "datos": datos,
-        "registros_hoy": registros_hoy,
-        "registros_semana": registros_semana,
-        "total_registros": total_registros,
-        #"user": username
-    })
+    response = templates.TemplateResponse("dashboard.html", {"request": request,
+                                                             "datos": datos,
+                                                             "registros_hoy": registros_hoy,
+                                                             "registros_semana": registros_semana,
+                                                             "total_registros": total_registros,
+                                                             "user": username
+                                                             })
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"  # Mismo que arriba
+    return response
+    
+    
 
 
 

@@ -1,5 +1,5 @@
 #Usar una imagen base de Python
-FROM python:3.13.3-alpine
+FROM python:3.9-slim
 
 # Establecer el directorio de trabajo dentro del contenedor
 WORKDIR /proyecto_dashboard
@@ -15,8 +15,8 @@ COPY . ./
 
 
 # Comando para ejecutar la aplicación
-CMD ["uvicorn", "app_fastapi:app", "--host", "0.0.0.0", "--port", "8004", "--workers", "4"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8005", "--workers", "4"]
 
 # Exponer el puerto en el que se ejecutará FastAPI
-EXPOSE 8004
+EXPOSE 8005
 
