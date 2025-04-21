@@ -52,12 +52,12 @@
     <div class="login-container text-center">
         <img src="/static/images/Logo-Contraloria.png" alt="Logo" class="logo">
         <h3 class="mb-3">Inicio de Sesión</h3>
-        <form onsubmit="login(event)">
+        <form onsubmit="login(event)" autocomplete="off">
             <div class="mb-3">
-                <input type="text" name="username" class="form-control" placeholder="Nombre de Usuario" required>
+                <input type="text" name="username" class="form-control" placeholder="Nombre de Usuario" required autocomplete="off">
             </div>
             <div class="mb-3">
-                <input type="password" name="password" class="form-control" placeholder="Contraseña" required>
+                <input type="password" name="password" class="form-control" placeholder="Contraseña" required autocomplete="off">
             </div>
             <button type="submit" class="btn btn-primary w-100">Ingresar</button>
         </form>

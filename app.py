@@ -179,24 +179,49 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(data={"sub": user.full_name}, expires_delta=access_token_expires)
 
-    response = Response(status_code=status.HTTP_200_OK, content=json.dumps({"code":status.HTTP_200_OK, "msg": "ok"}))
-    response.set_cookie(key="sessionid", value=access_token, httponly=True, max_age=ACCESS_TOKEN_EXPIRE_MINUTES)
+    response = JSONResponse(content={"code":status.HTTP_200_OK, "msg": "ok"})
+    response.set_cookie(
+        key="sessionid", 
+        value=access_token, 
+        httponly=True, 
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES*60,
+        secure=True,  # Solo para HTTPS
+        samesite='lax'
+    )
+    
+    # Cabeceras para prevenir caching
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    
     return response
-
 
 
 @app.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    headers = {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+    }
+    return templates.TemplateResponse("login.html", {"request": request}, headers=headers)
 
 
 @app.get("/logout")
-async def logout():
-    response = RedirectResponse(url="/", status_code=303)
+async def logout(request: Request):
+    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    
+    # Eliminar la cookie de sesión
     response.delete_cookie("sessionid")
-    # Cabeceras clave:
+    
+    # Cabeceras para prevenir caching
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
     response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    
+    # Limpiar cualquier dato de sesión del servidor
+    request.session.clear()
+    
     return response
 
 @app.get("/dashboard", response_class=HTMLResponse)
