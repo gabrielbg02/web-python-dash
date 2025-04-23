@@ -34,11 +34,11 @@
             margin-right: 3px;
         }
         /* Fuerza la eliminación de cualquier elemento flotante */
-        #tablaFormularios thead th:after,
+        /*#tablaFormularios thead th:after,
         #tablaFormularios thead th:before {
             content: "" !important;
             display: none !important;
-        }
+        }*/
         .btn-success {
             margin-left: 3px;
             color: white;
@@ -59,19 +59,19 @@
     <div class="container" style="margin-top: 0; padding-top: 0;">
         <nav class="navbar">
             <div class="container-fluid">
-                <div class="row w-100 align-items-center">
+                <div class="row w-100 align-items-center mx-0">
                     <!-- Logo a la izquierda -->
-                    <div class="col-md-2 text-start">
+                    <div class="col-md-2 text-start ps-0">
                         <img src="/static/images/Logo-Contraloria.png" alt="Logo" width="165">
                     </div>
                     
                     <!-- Título centrado -->
-                    <div class="col-md-6 d-flex justify-content-center">
-                        <h2 class="mb-0 text-center" style="font-family: 'Questrial', sans-serif; margin: 0 auto;">Registro de Reportes DACCS</h2>
+                    <div class="col-md-8 text-center mx-auto">
+                        <h2 class="mb-0" style="font-family: 'Questrial', sans-serif;">Registro de Reportes DACCS</h2>
                     </div>
                     
                     <!-- Usuario y botón a la derecha -->
-                    <div class="col-md-4 text-end">
+                    <div class="col-md-2 text-end pe-0">
                         <div class="d-flex flex-column align-items-end">
                             <button onclick="logout()" class="btn btn-danger mb-2">Cerrar Sesión</button>
                             <span class="navbar-brand" style="font-family: 'Questrial', sans-serif;">Hola, {{ user }}</span>
@@ -345,8 +345,12 @@
                 "order": [[3, "desc"]],
                 "columnDefs": [
                     { 
+                        "width": "9%",
+                        "targets": 3
+                    },
+                    { 
                         "orderable": false,
-                        "targets": [0,1,2,3,4,5]
+                        "targets": [0,1,2,4,5]
                     },
                     { 
                         "targets": [3],
