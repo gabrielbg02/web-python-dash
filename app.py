@@ -241,7 +241,7 @@ def read_root(request: Request):
         return RedirectResponse(url="/", status_code=303)
     #username = 'Jeremi J Alcala M'
     
-    print(f"Cantidad de datos recuperados: {len(datos)}") # Agrega esta línea
+    print(f"Cantidad de datos recuperados: {len(datos)}") 
     hoy = datetime.now()
     inicio_dia = datetime(hoy.year, hoy.month, hoy.day)
     inicio_semana = hoy - timedelta(days=hoy.weekday())
