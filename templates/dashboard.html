@@ -135,7 +135,7 @@
                     <td>{{ dato.nombre_organismo }}</td>
                     <td>{{ dato.nombre_llenado }}</td>
                     <td>{{ dato.correo_llenado }}</td>
-                    <td>{{ dato.id.generation_time.strftime('%d-%m-%Y') if dato.id.generation_time else '' }}</td>
+                    <td>{{ dato.id.generation_time.strftime('%Y-%m-%d') if dato.id.generation_time else '' }}</td>
                     <td>
                         <button class="btn btn-sm btn-info" onclick="mostrarDetalles('{{ dato.id }}')">
                             <i class="fa-regular fa-folder-open"></i>
@@ -345,6 +345,10 @@
             $('#tablaFormularios').DataTable({
                 "order": [[3, "desc"]],
                 "columnDefs": [
+                    {
+                        "type": "date", 
+                        "targets": 3  // Columna de fecha
+                    },
                     { 
                         "width": "9%",
                         "targets": 3

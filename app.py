@@ -180,14 +180,7 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
     access_token = create_access_token(data={"sub": user.full_name}, expires_delta=access_token_expires)
 
     response = JSONResponse(content={"code":status.HTTP_200_OK, "msg": "ok"})
-    response.set_cookie(
-        key="sessionid", 
-        value=access_token, 
-        httponly=True, 
-        max_age=ACCESS_TOKEN_EXPIRE_MINUTES*60,
-        secure=True,  # Solo para HTTPS
-        samesite='lax'
-    )
+    response.set_cookie(key="sessionid", value=access_token, httponly=True, max_age=ACCESS_TOKEN_EXPIRE_MINUTES)
     
     # Cabeceras para prevenir caching
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
@@ -226,7 +219,7 @@ async def logout(request: Request):
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def read_root(request: Request):
-    datos = datos_formulario.objects().order_by('-id').limit(100)
+    datos = datos_formulario.objects().order_by('-id.generation_time').limit(100)
     
     token = request.cookies.get("sessionid")
     if not token:
